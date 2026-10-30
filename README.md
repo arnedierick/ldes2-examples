@@ -21,6 +21,11 @@ boundaries of messages.
 | --- | --- | --- | --- |
 | [telraam](datasets/telraam) | the [Telraam LDES 1.0](https://ldes.telraam-api.net/measurements) of traffic counts in Flanders | ~30 000 per hour, default window 2 hours | public access, no explicit license (see the [dataset](datasets/telraam)) |
 | [riverbench-assist-iot-weather-graphs](datasets/riverbench-assist-iot-weather-graphs) | the RiverBench dataset [assist-iot-weather-graphs](https://w3id.org/riverbench/datasets/assist-iot-weather-graphs/dev) | 10 000 (of 701 278) | CC BY 4.0 |
+| [riverbench-citypulse-traffic-graphs](datasets/riverbench-citypulse-traffic-graphs) | the RiverBench dataset [citypulse-traffic-graphs](https://w3id.org/riverbench/datasets/citypulse-traffic-graphs/dev) | 10 000 (of 4 382 599) | CC BY 4.0 |
+| [riverbench-officegraph](datasets/riverbench-officegraph) | the RiverBench dataset [officegraph](https://w3id.org/riverbench/datasets/officegraph/dev) | 10 000 (of 14 930 478) | CC BY 4.0 |
+| [riverbench-muziekweb](datasets/riverbench-muziekweb) | the RiverBench dataset [muziekweb](https://w3id.org/riverbench/datasets/muziekweb/dev) | 10 000 (of 2 450 357) | ODC-By 1.0 |
+| [marine-regions](datasets/marine-regions) | the [Marine Regions LDES 1.0](https://www.marineregions.org/feed) of changes to marine place names | 3 682, default window 2025-01-01 to 2026-10-29 | CC BY 4.0 |
+| [nerc-p01](datasets/nerc-p01) | the [NERC Vocabulary Server LDES 1.0](http://vocab.nerc.ac.uk/ldes/P01/) of the P01 vocabulary | 50 612, all changes up to 2026-10-23 | CC BY 4.0 |
 
 The converted data is not in this repository: it is generated in `out/` (see [Output](#output)).
 
@@ -152,7 +157,7 @@ A RiverBench dataset ([all datasets](https://w3id.org/riverbench/v/dev/datasets)
 
 ```json
 {
-  "source": { "type": "riverbench", "dataset": "citypulse-traffic-graphs", "size": "10k" }
+  "source": { "type": "riverbench", "dataset": "muziekweb", "size": "10k" }
 }
 ```
 
@@ -193,3 +198,5 @@ datasets and the README of every dataset. Check that license before you publish 
   creators and licenses, which the catalog of every converted dataset lists.
 - [Telraam](https://telraam.net) publishes its traffic counts as an LDES 1.0 at
   [ldes.telraam-api.net](https://ldes.telraam-api.net/measurements).
+- [Marine Regions](https://www.marineregions.org) is maintained by the Flanders Marine Institute (VLIZ), and the
+  [NERC Vocabulary Server](https://vocab.nerc.ac.uk) by the British Oceanographic Data Centre.

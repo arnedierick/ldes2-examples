@@ -1,0 +1,10 @@
+{
+  "$comment": "Sensor measurements in an office building, from RiverBench. See README.md in this folder.",
+  "source": {
+    "type": "riverbench",
+    "dataset": "officegraph",
+    "size": "10k"
+  },
+  "membership": { "type": "https://saref.etsi.org/core/Measurement" },
+  "timestampPath": "https://saref.etsi.org/core/hasTimestamp"
+}

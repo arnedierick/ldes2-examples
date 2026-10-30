@@ -1,0 +1,10 @@
+{
+  "$comment": "Changes to the NERC Vocabulary Server collection P01 (BODC Parameter Usage Vocabulary). See README.md in this folder.",
+  "license": "https://spdx.org/licenses/CC-BY-4.0",
+  "source": { "type": "ldes1", "url": "http://vocab.nerc.ac.uk/ldes/P01/2026_10_15_10_13_02_2026_10_23_10_11_23.ttl" },
+  "membership": { "type": "http://www.w3.org/2004/02/skos/core#Concept" },
+  "pages": { "size": 1000 },
+  "prefixes": {
+    "p01": "http://vocab.nerc.ac.uk/collection/P01/current/"
+  }
+}
