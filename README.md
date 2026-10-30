@@ -25,6 +25,7 @@ boundaries of messages.
 | [riverbench-officegraph](datasets/riverbench-officegraph) | the RiverBench dataset [officegraph](https://w3id.org/riverbench/datasets/officegraph/dev) | 10 000 (of 14 930 478) | CC BY 4.0 |
 | [riverbench-muziekweb](datasets/riverbench-muziekweb) | the RiverBench dataset [muziekweb](https://w3id.org/riverbench/datasets/muziekweb/dev) | 10 000 (of 2 450 357) | ODC-By 1.0 |
 | [marine-regions](datasets/marine-regions) | the [Marine Regions LDES 1.0](https://www.marineregions.org/feed) of changes to marine place names | 3 682, default window 2025-01-01 to 2026-10-29 | CC BY 4.0 |
+| [edmo](datasets/edmo) | the [EDMO LDES 1.0](https://edmo.seadatanet.org/ldes/feed) of changes to the European Directory of Marine Organisations | 133, default window 2026-01-01 to 2026-10-29 | CC BY 4.0, under the [EMODnet terms of use](https://emodnet.ec.europa.eu/en/terms-use-emodnet-online-services-data-and-data-products) |
 | [nerc-p01](datasets/nerc-p01) | the [NERC Vocabulary Server LDES 1.0](http://vocab.nerc.ac.uk/ldes/P01/) of the P01 vocabulary | 50 612, all changes up to 2026-10-23 | CC BY 4.0 |
 
 The converted data is not in this repository: it is generated in `out/` (see [Output](#output)).

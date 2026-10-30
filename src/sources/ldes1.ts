@@ -11,6 +11,7 @@ import { DataFactory } from "n3";
 import type { Quad } from "@rdfjs/types";
 import type { Ldes1SourceConfig } from "../config.ts";
 import { readMembers, recordingFetch, type ReadOptions, type Response } from "../client.ts";
+import { sameQuads } from "../compare.ts";
 import { memberTimestamp, type SourceMember } from "../members.ts";
 import { cbd, fetchDocument, parsableByN3, parseDocument, preferredValue } from "../rdf.ts";
 import { addSizes, measure, NO_BYTES, type Sizes } from "../sizes.ts";
@@ -94,6 +95,7 @@ export class Ldes1Source implements Source {
         for (const harvest of this.harvests(options.from, options.until)) {
             if (!this.config.fragments) {
                 yield* readMembers(harvest.url, {
+                    noShape: this.config.shape === false,
                     ...harvest.read,
                     ascending: options.timestampPath !== undefined,
                     fetch,
@@ -102,7 +104,12 @@ export class Ldes1Source implements Source {
             }
             // The members of a fragment are not necessarily in order: they are sorted per fragment
             const fragment: SourceMember[] = [];
-            for await (const member of readMembers(harvest.url, { ...harvest.read, fetch })) fragment.push(member);
+            for await (const member of readMembers(harvest.url, {
+                ...harvest.read,
+                noShape: this.config.shape === false,
+                fetch,
+            }))
+                fragment.push(member);
             if (options.timestampPath) {
                 const path = options.timestampPath;
                 const timestamps = new Map(fragment.map((member) => [member, memberTimestamp(member, path)]));
@@ -169,6 +176,8 @@ export class Ldes1Source implements Source {
             counts: [],
         };
         const raw = this.config.rawReference ?? true;
+        // The descriptions of every member so far, per page, as the client can fetch a page more than once
+        const descriptions = new Map<string, Quad[][]>();
         const inWindow = (member: SampledMember) =>
             member.timestamp === undefined ||
             ((options.from === undefined || member.timestamp.epochMs >= options.from.getTime()) &&
@@ -177,10 +186,14 @@ export class Ldes1Source implements Source {
         for (const harvest of harvests) {
             const fetch = recordingFetch(
                 this.accept,
-                (response) => raw && this.addDescriptions(response, ids, fromPages),
+                (response) => raw && this.addDescriptions(response, ids, fromPages, descriptions),
             );
             let count = 0;
-            for await (const member of readMembers(harvest.url, { ...harvest.read, fetch })) {
+            for await (const member of readMembers(harvest.url, {
+                ...harvest.read,
+                noShape: this.config.shape === false,
+                fetch,
+            })) {
                 const timestamp = options.timestampPath ? memberTimestamp(member, options.timestampPath) : undefined;
                 const sampled = { id: member.id.value, timestamp };
                 if (harvest.includes(sampled) && inWindow(sampled)) count++;
@@ -222,13 +235,26 @@ export class Ldes1Source implements Source {
         return this.harvests(options.from, options.until);
     }
 
-    /** Adds the CBD of every sampled member that a raw page describes */
-    private addDescriptions(response: Response, ids: Set<string>, reference: Reference) {
+    /**
+     * Adds the CBD of every sampled member that a raw page describes. A description that is the same as one of an
+     * earlier page is the same page fetched again (e.g. the root of the event stream, and then as its view), and is
+     * added only once.
+     */
+    private addDescriptions(
+        response: Response,
+        ids: Set<string>,
+        reference: Reference,
+        descriptions: Map<string, Quad[][]>,
+    ) {
         if (!parsableByN3(response.contentType)) return;
         const store = parseDocument(response.body.toString("utf8"), response.url, response.contentType);
         for (const id of ids) {
             const quads: Quad[] = cbd(store, DataFactory.namedNode(id));
-            if (quads.length > 0) reference.members.set(id, [...(reference.members.get(id) ?? []), ...quads]);
+            if (quads.length === 0) continue;
+            const earlier = descriptions.get(id) ?? [];
+            if (earlier.some((description) => sameQuads(description, quads))) continue;
+            descriptions.set(id, [...earlier, quads]);
+            reference.members.set(id, [...(reference.members.get(id) ?? []), ...quads]);
         }
     }
 }

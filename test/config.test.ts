@@ -22,6 +22,7 @@ describe("dataset configuration", () => {
                     fragments: { template: "https://example.org/ldes?hour={hour}", every: "hour" },
                     accept: "text/turtle",
                     rawReference: false,
+                    shape: false,
                 },
                 membership: { type: "https://example.org/Observation" },
                 timestampPath: null,
@@ -34,6 +35,7 @@ describe("dataset configuration", () => {
             },
             "telraam",
         );
+        expect(config.source).toMatchObject({ rawReference: false, shape: false });
         expect(config.timestampPath).toBeNull();
         expect(config.pages).toEqual({ size: 500, bucket: "hour" });
         expect(config.prefixes).toEqual({ ex: "https://example.org/" });

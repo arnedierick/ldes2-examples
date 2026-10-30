@@ -78,3 +78,82 @@ describe("a server that drops connections", () => {
         await expect(names(local.base() + "/stream", 3)).rejects.toThrow(/page2/);
     });
 });
+
+/**
+ * One page with two members, of which the tree:shape requires a property they do not have, so that ldes-client
+ * dereferences them; the server answers for members with a web page with RDFa, as EDMO does, or drops the connection.
+ */
+function serveShaped(): {
+    server: http.Server;
+    base: () => string;
+    memberRequests: () => number;
+    dropMembers: (drop: boolean) => void;
+} {
+    let memberRequests = 0;
+    let dropMembers = false;
+    const server = http.createServer((request, response) => {
+        const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+        if (request.url?.startsWith("/member/")) {
+            memberRequests++;
+            if (dropMembers) {
+                response.socket?.destroy();
+                return;
+            }
+            response
+                .writeHead(200, { "content-type": "text/html; charset=utf-8" })
+                .end(
+                    `<!doctype html><html><head><link rel="stylesheet" href="/style.css"></head><body>A member</body></html>`,
+                );
+            return;
+        }
+        if (request.url !== "/stream") {
+            response.writeHead(404).end();
+            return;
+        }
+        response.writeHead(200, { "content-type": "text/turtle" }).end(
+            `${PREFIXES}@prefix sh: <http://www.w3.org/ns/shacl#> .
+            <${base}/stream> a ldes:EventStream ; tree:view <${base}/stream> ;
+                tree:shape [ a sh:NodeShape ; sh:property [ sh:path ex:required ; sh:minCount 1 ] ] ;
+                tree:member <${base}/member/a>, <${base}/member/b> .
+            <${base}/member/a> a ex:Thing ; ex:name "a" .
+            <${base}/member/b> a ex:Thing ; ex:name "b" .`,
+        );
+    });
+    return {
+        server,
+        base: () => `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
+        memberRequests: () => memberRequests,
+        dropMembers: (drop) => (dropMembers = drop),
+    };
+}
+
+describe("members that the server only describes in web pages", () => {
+    const local = serveShaped();
+    beforeAll(() => new Promise<void>((resolve) => local.server.listen(0, "127.0.0.1", resolve)));
+    afterAll(() => new Promise<void>((resolve) => local.server.close(() => resolve())));
+
+    const read = async (noShape: boolean) => {
+        const fetch = recordingFetch("text/turtle", () => undefined, { attempts: 1 });
+        const members = [];
+        for await (const member of readMembers(local.base() + "/stream", { fetch, noShape })) members.push(member);
+        return members;
+    };
+
+    test("a web page stops the reading, instead of adding its RDFa to a member", async () => {
+        local.dropMembers(false);
+        await expect(read(false)).rejects.toThrow(/web page.*"shape": false/);
+    });
+
+    test("a member that cannot be dereferenced stops the reading", async () => {
+        local.dropMembers(true);
+        await expect(read(false)).rejects.toThrow(/member\/a/);
+    });
+
+    test('with "shape": false, members are their CBD, and are not dereferenced', async () => {
+        const before = local.memberRequests();
+        const members = await read(true);
+        expect(members.map((member) => member.id.value.split("/").pop()).sort()).toEqual(["a", "b"]);
+        expect(members.every((member) => member.quads.length === 2)).toBe(true);
+        expect(local.memberRequests()).toBe(before);
+    });
+});
