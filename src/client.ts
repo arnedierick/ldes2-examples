@@ -15,14 +15,22 @@ export type ReadOptions = {
     before?: Date;
     /** Ask the client to emit the members in ascending order of their timestamp */
     ascending?: boolean;
+    /** Extract members as their Concise Bounded Description, instead of with the tree:shape of the LDES */
+    noShape?: boolean;
     fetch?: typeof fetch;
 };
+
+/** Media types of which ldes-client reads the RDFa, which is about the web page, not about a member */
+const WEB_PAGES = ["text/html", "application/xhtml+xml"];
 
 /**
  * All members of an LDES, as the client extracts them.
  *
  * ldes-client logs a page it cannot fetch and goes on without it, which would silently leave out the members of that
- * page, and of every page behind it. A fetch that fails is therefore an error here, once the client is done.
+ * page, and of every page behind it. A fetch that fails is therefore an error here, once the client is done. So is a
+ * web page: when a member does not have the properties the tree:shape of the LDES requires, the client dereferences
+ * it, and when the server answers with HTML, the client would add the RDFa of that page (stylesheets, icons) to the
+ * member.
  */
 export async function* readMembers(url: string, options: ReadOptions = {}): AsyncGenerator<SourceMember> {
     const failures: string[] = [];
@@ -33,21 +41,36 @@ export async function* readMembers(url: string, options: ReadOptions = {}): Asyn
             urlIsView: options.urlIsView ?? false,
             after: options.after,
             before: options.before,
+            noShape: options.noShape ?? false,
             fetch:
                 fetch &&
                 (async (input, init) => {
+                    const requested = input instanceof Request ? input.url : String(input);
+                    let response: globalThis.Response;
                     try {
-                        return await fetch(input, init);
+                        response = await fetch(input, init);
                     } catch (error) {
-                        failures.push(`${input instanceof Request ? input.url : String(input)} (${describe(error)})`);
+                        failures.push(`${requested} (${describe(error)})`);
                         throw error;
                     }
+                    const type = response.headers.get("content-type")?.split(";")[0].trim().toLowerCase() ?? "";
+                    if (response.ok && WEB_PAGES.includes(type)) {
+                        failures.push(
+                            `${requested} (a web page, ${type}, instead of RDF; if it is a member, try "shape": false)`,
+                        );
+                        // Not an error the client sees: it does not end its stream on a failed dereference of a member
+                        return new Response("# A web page, left out\n", { headers: { "content-type": "text/turtle" } });
+                    }
+                    return response;
                 }),
         },
         options.ascending ? "ascending" : "none",
     );
-    const incomplete = (cause?: unknown) =>
-        new Error(`Could not fetch ${failures.join(", ")}, so the members of the LDES are incomplete`, { cause });
+    const incomplete = (cause?: unknown) => {
+        const shown = failures.slice(0, 3).join(", ") + (failures.length > 3 ? ` and ${failures.length - 3} more` : "");
+        const message = `Could not fetch ${shown}, so the members of the LDES are incomplete`;
+        return cause === undefined ? new Error(message) : new Error(message, { cause });
+    };
     const reader = client.stream({ highWaterMark: 100 }).getReader();
     try {
         while (true) {

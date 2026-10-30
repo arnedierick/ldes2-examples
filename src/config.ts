@@ -33,6 +33,11 @@ export type Ldes1SourceConfig = {
     accept?: string;
     /** Whether check also compares members with their Concise Bounded Description in the raw pages (default true) */
     rawReference?: boolean;
+    /**
+     * Whether ldes-client extracts members with the tree:shape of the LDES (default true). false: a member is the
+     * Concise Bounded Description of its IRI, and the client never dereferences it.
+     */
+    shape?: boolean;
 };
 
 export type RiverBenchSourceConfig = {
@@ -181,7 +186,7 @@ class Reader {
 function readSource(reader: Reader): SourceConfig {
     const type = reader.oneOf("type", ["ldes1", "riverbench"]);
     if (type === "ldes1") {
-        reader.allowOnly(["type", "url", "fragments", "accept", "rawReference"]);
+        reader.allowOnly(["type", "url", "fragments", "accept", "rawReference", "shape"]);
         const fragments = reader.object("fragments");
         if (fragments) {
             fragments.allowOnly(["template", "every"]);
@@ -199,6 +204,7 @@ function readSource(reader: Reader): SourceConfig {
             },
             accept: reader.string("accept"),
             rawReference: reader.boolean("rawReference"),
+            shape: reader.boolean("shape"),
         };
     }
     if (type === "riverbench") {

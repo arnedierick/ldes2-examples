@@ -1,0 +1,14 @@
+{
+  "$comment": "The European Directory of Marine Organisations (EDMO) of SeaDataNet. See README.md in this folder.",
+  "license": "https://spdx.org/licenses/CC-BY-4.0",
+  "source": { "type": "ldes1", "url": "https://edmo.seadatanet.org/ldes/feed", "shape": false },
+  "membership": { "type": "http://www.w3.org/ns/org#Organization" },
+  "window": { "from": "2026-01-01T00:00:00Z", "until": "2026-10-29T00:00:00Z" },
+  "pages": { "bucket": "day" },
+  "prefixes": {
+    "org": "http://www.w3.org/ns/org#",
+    "edmo": "https://edmo.seadatanet.org/ontology#",
+    "vcard": "http://www.w3.org/2006/vcard/ns#",
+    "geosparql": "http://www.opengis.net/ont/geosparql#"
+  }
+}
