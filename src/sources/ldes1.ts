@@ -13,7 +13,7 @@ import type { Ldes1SourceConfig } from "../config.ts";
 import { readMembers, recordingFetch, type ReadOptions, type Response } from "../client.ts";
 import { sameQuads } from "../compare.ts";
 import { memberTimestamp, type SourceMember } from "../members.ts";
-import { cbd, fetchDocument, parsableByN3, parseDocument, preferredValue } from "../rdf.ts";
+import { cbd, fetchDocument, parsable, parseDocument, preferredValue } from "../rdf.ts";
 import { addSizes, measure, NO_BYTES, type Sizes } from "../sizes.ts";
 import {
     bucketEnd,
@@ -184,10 +184,14 @@ export class Ldes1Source implements Source {
                 (options.until === undefined || member.timestamp.epochMs < options.until.getTime()));
 
         for (const harvest of harvests) {
-            const fetch = recordingFetch(
-                this.accept,
-                (response) => raw && this.addDescriptions(response, ids, fromPages, descriptions),
-            );
+            // Parsing a page can take a while (JSON-LD), so the pages are read once the client is done
+            const parsing: Promise<void>[] = [];
+            const fetch = recordingFetch(this.accept, (response) => {
+                if (!raw) return;
+                const parsed = this.addDescriptions(response, ids, fromPages, descriptions);
+                parsed.catch(() => undefined); // handled by Promise.all below
+                parsing.push(parsed);
+            });
             let count = 0;
             for await (const member of readMembers(harvest.url, {
                 ...harvest.read,
@@ -199,6 +203,7 @@ export class Ldes1Source implements Source {
                 if (harvest.includes(sampled) && inWindow(sampled)) count++;
                 if (ids.has(member.id.value)) fromClient.members.set(member.id.value, member.quads);
             }
+            await Promise.all(parsing);
             fromClient.counts.push({
                 label: harvest.label,
                 expected: count,
@@ -240,14 +245,14 @@ export class Ldes1Source implements Source {
      * earlier page is the same page fetched again (e.g. the root of the event stream, and then as its view), and is
      * added only once.
      */
-    private addDescriptions(
+    private async addDescriptions(
         response: Response,
         ids: Set<string>,
         reference: Reference,
         descriptions: Map<string, Quad[][]>,
     ) {
-        if (!parsableByN3(response.contentType)) return;
-        const store = parseDocument(response.body.toString("utf8"), response.url, response.contentType);
+        if (!parsable(response.contentType)) return;
+        const store = await parseDocument(response.body.toString("utf8"), response.url, response.contentType);
         for (const id of ids) {
             const quads: Quad[] = cbd(store, DataFactory.namedNode(id));
             if (quads.length === 0) continue;

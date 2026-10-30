@@ -21,7 +21,7 @@ src/
   time.ts               xsd:dateTime values, without losing their lexical form or precision
   sizes.ts              bytes, raw and compressed
   client.ts             reading an LDES with ldes-client
-  rdf.ts                reading RDF documents with N3.js
+  rdf.ts                reading RDF documents with N3.js, and JSON-LD with jsonld-streaming-parser
   output.ts             the layout of out/<dataset>/ and stats.json
 test/                   vitest; no network needed
 ```
