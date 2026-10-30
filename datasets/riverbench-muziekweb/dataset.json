@@ -1,0 +1,8 @@
+{
+  "$comment": "The music catalog of Muziekweb, from RiverBench. See README.md in this folder.",
+  "source": {
+    "type": "riverbench",
+    "dataset": "muziekweb",
+    "size": "10k"
+  }
+}

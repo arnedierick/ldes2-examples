@@ -1,0 +1,9 @@
+{
+  "$comment": "Traffic sensors of the CityPulse project in Aarhus, from RiverBench. See README.md in this folder.",
+  "source": {
+    "type": "riverbench",
+    "dataset": "citypulse-traffic-graphs",
+    "size": "10k"
+  },
+  "timestampPath": null
+}

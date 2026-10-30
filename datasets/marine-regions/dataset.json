@@ -1,0 +1,15 @@
+{
+  "$comment": "The Marine Regions gazetteer of marine place names. See README.md in this folder.",
+  "license": "https://spdx.org/licenses/CC-BY-4.0",
+  "source": { "type": "ldes1", "url": "https://www.marineregions.org/feed", "rawReference": false },
+  "membership": { "type": "http://marineregions.org/ns/ontology#MRGeoObject" },
+  "window": { "from": "2025-01-01T00:00:00Z", "until": "2026-10-29T00:00:00Z" },
+  "pages": { "bucket": "day" },
+  "prefixes": {
+    "mr": "http://marineregions.org/ns/ontology#",
+    "mrt": "http://marineregions.org/ns/placetypes#",
+    "mrgid": "http://marineregions.org/mrgid/",
+    "gsp": "http://www.opengis.net/ont/geosparql#",
+    "schema": "https://schema.org/"
+  }
+}
