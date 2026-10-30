@@ -30,7 +30,7 @@ itself where possible. `src/config.ts` checks the configuration, and names the f
 | --- | --- |
 | `url` | The IRI of the `ldes:EventStream`. Its description provides the title, description, license, timestamp path and version path. |
 | `fragments` | Optional. `{ "template": "...{year}-{month}-{day}T{hour}...", "every": "hour" }`: the fragment with the members of every hour (or `day`). `{year}`, `{month}`, `{day}` and `{hour}` become the zero padded UTC start of the hour or day. Use this when the relations of the LDES do not let a client skip to a time window: then the client starts at every fragment instead of at the event stream. It needs a window with `from` and `until`. |
-| `accept` | The media type to request the pages in (default `text/turtle`). This is also the serialization in which the size of the LDES 1.0 is measured. |
+| `accept` | The media type to request the pages in (default `text/turtle`): Turtle, TriG, N-Triples, N-Quads or JSON-LD (`application/ld+json`). This is also the serialization in which the size of the LDES 1.0 is measured. |
 | `rawReference` | `false` to compare members only with what ldes-client extracts, not also with their Concise Bounded Description in the raw pages (default `true`). Switch it off when members are not the CBD of their identifier, e.g. when the LDES extracts them with a shape. |
 | `shape` | `false` to extract every member as the Concise Bounded Description of its IRI, instead of with the `tree:shape` of the LDES (default `true`). With a shape, ldes-client dereferences a member that lacks a property the shape requires; when the server answers with a web page, the conversion stops, rather than adding the RDFa of that page to the member. |
 

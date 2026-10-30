@@ -1,23 +1,60 @@
 /**
- * Small helpers to read RDF documents and descriptions with N3.js.
+ * Small helpers to read RDF documents and descriptions: with N3.js, and JSON-LD with jsonld-streaming-parser.
  */
 import { DataFactory, Parser, Store } from "n3";
+import { JsonLdParser } from "jsonld-streaming-parser";
 import type { Quad, Term } from "@rdfjs/types";
 
 const N3_MEDIA_TYPES = ["text/turtle", "application/trig", "application/n-triples", "application/n-quads", "text/n3"];
+const JSON_LD_MEDIA_TYPES = ["application/ld+json"];
 
-/** Whether N3.js can parse a response with this content type */
-export function parsableByN3(contentType: string): boolean {
-    return N3_MEDIA_TYPES.includes(contentType.split(";")[0].trim().toLowerCase());
+function mediaType(contentType: string): string {
+    return contentType.split(";")[0].trim().toLowerCase();
 }
 
-export function parseDocument(text: string, baseIRI: string, contentType = "text/turtle"): Store {
-    const format = contentType.split(";")[0].trim();
-    return new Store(new Parser({ baseIRI, format }).parse(text));
+/** Whether a response with this content type can be parsed here */
+export function parsable(contentType: string): boolean {
+    const type = mediaType(contentType);
+    return N3_MEDIA_TYPES.includes(type) || JSON_LD_MEDIA_TYPES.includes(type);
 }
 
 /**
- * Fetches and parses an RDF document in a serialization N3.js can read.
+ * The remote JSON-LD contexts, fetched once: an LDES in JSON-LD often refers to the same contexts on every page,
+ * and in every member.
+ */
+const contexts = new Map<string, Promise<any>>();
+const documentLoader = {
+    load(url: string): Promise<any> {
+        let context = contexts.get(url);
+        if (!context) {
+            context = fetch(url, { headers: { accept: "application/ld+json, application/json" } }).then((response) => {
+                if (!response.ok) throw new Error(`The JSON-LD context ${url} responded with HTTP ${response.status}`);
+                return response.json();
+            });
+            // A failed fetch is tried again by the next document that needs it
+            context.catch(() => contexts.delete(url));
+            contexts.set(url, context);
+        }
+        return context;
+    },
+};
+
+export async function parseDocument(text: string, baseIRI: string, contentType = "text/turtle"): Promise<Store> {
+    const format = mediaType(contentType);
+    if (!JSON_LD_MEDIA_TYPES.includes(format)) return new Store(new Parser({ baseIRI, format }).parse(text));
+    const parser = new JsonLdParser({ baseIRI, documentLoader });
+    const quads: Quad[] = [];
+    await new Promise<void>((resolve, reject) => {
+        parser.on("data", (quad: Quad) => quads.push(quad));
+        parser.on("error", reject);
+        parser.on("end", resolve);
+        parser.end(text);
+    });
+    return new Store(quads);
+}
+
+/**
+ * Fetches and parses an RDF document in a serialization that can be parsed here.
  * `format` overrides the content type of the response, for servers that do not state it (correctly).
  */
 export async function fetchDocument(
@@ -28,10 +65,11 @@ export async function fetchDocument(
     const response = await fetch(url, { headers: { accept } });
     if (!response.ok) throw new Error(`${url} responded with HTTP ${response.status}`);
     const contentType = format ?? response.headers.get("content-type") ?? accept;
-    if (!parsableByN3(contentType)) {
+    if (!parsable(contentType)) {
         throw new Error(`${url} responded with ${contentType}, which cannot be parsed here`);
     }
-    return { store: parseDocument(await response.text(), response.url || url, contentType), url: response.url || url };
+    const store = await parseDocument(await response.text(), response.url || url, contentType);
+    return { store, url: response.url || url };
 }
 
 /**
