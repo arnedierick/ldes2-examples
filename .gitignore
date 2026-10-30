@@ -1,0 +1,8 @@
+node_modules/
+# Generated LDES 2.0 data, see README.md
+out/
+# Downloaded source files, such as RiverBench distributions
+cache/
+.idea/
+.vscode/
+*.log

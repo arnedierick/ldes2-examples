@@ -1,0 +1,20 @@
+{
+    // The sources are run directly by Node.js (type stripping), so TypeScript only checks them.
+    "compilerOptions": {
+        "target": "es2023",
+        "lib": ["es2023", "dom"],
+        "module": "nodenext",
+        "moduleResolution": "nodenext",
+        "types": ["node"],
+        "noEmit": true,
+        "allowImportingTsExtensions": true,
+        "erasableSyntaxOnly": true,
+        "verbatimModuleSyntax": true,
+        "strict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noFallthroughCasesInSwitch": true,
+        "skipLibCheck": true
+    },
+    "include": ["bin/**/*.ts", "src/**/*.ts", "test/**/*.ts"]
+}

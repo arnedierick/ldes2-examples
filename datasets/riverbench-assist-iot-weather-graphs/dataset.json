@@ -1,0 +1,8 @@
+{
+  "$comment": "The weather station stream of RiverBench, as timestamped named graphs. See README.md in this folder.",
+  "source": {
+    "type": "riverbench",
+    "dataset": "assist-iot-weather-graphs",
+    "size": "10k"
+  }
+}

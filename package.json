@@ -1,0 +1,34 @@
+{
+  "name": "ldes2-examples",
+  "version": "0.1.0",
+  "description": "Linked Data Event Streams 2.0 example datasets, converted from LDES 1.0 streams and RiverBench datasets, with a checker that proves no information is lost.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "author": "Arne Dierick",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "convert": "node bin/convert.ts",
+    "check": "node bin/check.ts",
+    "datasets": "node bin/datasets.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"{bin,src,test}/**/*.ts\" \"datasets/**/*.json\""
+  },
+  "dependencies": {
+    "ldes-client": "file:../ldes-client",
+    "n3": "^2.13.12",
+    "rdf-isomorphic": "^2.0.1",
+    "rdfjs-jelly": "^0.2.0"
+  },
+  "devDependencies": {
+    "@rdfjs/types": "^2.0.1",
+    "@types/n3": "^1.26.5",
+    "@types/node": "^24.0.0",
+    "prettier": "^3.9.10",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

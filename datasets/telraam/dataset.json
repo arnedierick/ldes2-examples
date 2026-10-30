@@ -1,0 +1,31 @@
+{
+  "$comment": "Traffic counts of Telraam sensors in Flanders. See README.md in this folder.",
+  "title": "Telraam traffic counts in Flanders",
+  "source": {
+    "type": "ldes1",
+    "url": "https://ldes.telraam-api.net/measurements",
+    "fragments": {
+      "template": "https://ldes.telraam-api.net/measurements/by-time?year={year}&month={month}&day={day}&hour={hour}",
+      "every": "hour"
+    },
+    "accept": "text/turtle"
+  },
+  "membership": { "type": "https://data.vlaanderen.be/ns/verkeersmetingen#Verkeersmeting" },
+  "window": { "from": "2026-10-28T08:00:00Z", "until": "2026-10-28T10:00:00Z" },
+  "pages": { "bucket": "hour" },
+  "prefixes": {
+    "sosa": "http://www.w3.org/ns/sosa/",
+    "time": "http://www.w3.org/2006/time#",
+    "om": "http://def.isotc211.org/iso19156/2011/Observation#",
+    "mp": "http://def.isotc211.org/iso19103/2015/MeasureTypes#",
+    "schema": "https://schema.org/",
+    "cdt": "https://w3id.org/cdt/",
+    "verkeer": "https://data.vlaanderen.be/ns/verkeersmetingen#",
+    "impl": "https://implementatie.data.vlaanderen.be/ns/vsds-verkeersmetingen#",
+    "cl-vrt": "https://data.vlaanderen.be/doc/concept/VkmVoertuigType/",
+    "cl-vkt": "https://data.vlaanderen.be/doc/concept/VkmVerkeersKenmerkType/",
+    "cl-mit": "https://data.vlaanderen.be/doc/concept/VkmMeetInstrumentType/",
+    "cl-trt": "https://inspire.ec.europa.eu/codelist/LinkDirectionValue/",
+    "telraam": "https://telraam.net/en/location/"
+  }
+}
