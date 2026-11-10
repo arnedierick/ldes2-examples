@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "jsonld-streaming-parser": "^5.0.2",
-    "ldes-client": "file:../ldes-client",
+    "ldes-client": "^0.4.0",
     "n3": "^2.13.12",
     "rdf-isomorphic": "^2.0.1",
     "rdfjs-jelly": "^0.2.0"
