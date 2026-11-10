@@ -33,14 +33,10 @@ The converted data is not in this repository: it is generated in `out/` (see [Ou
 
 ## Getting started
 
-You need [Node.js](https://nodejs.org) 24 or newer, and a build of ldes-client with LDES 2.0 support next to this
-folder. That support is on the `experiment-ldes-2.0` branch and not released yet, so `package.json` refers to it as
-`file:../ldes-client`. This local install is temporary: once ldes-client publishes a release with LDES 2.0 support
-(e.g. an alpha on npm), this project will depend on that release, and a plain `npm install` will be enough.
+You need [Node.js](https://nodejs.org) 24 or newer. ldes-client supports LDES 2.0 since version 0.4.0, which is
+installed from npm with the other dependencies:
 
 ```bash
-git clone -b experiment-ldes-2.0 https://github.com/KNowledgeOnWebScale/ldes-client ../ldes-client
-(cd ../ldes-client && npm install && npm run build)
 npm install
 ```
 
