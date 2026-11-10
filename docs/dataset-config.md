@@ -9,7 +9,7 @@ itself where possible. `src/config.ts` checks the configuration, and names the f
   "$comment": "Anything: a note for whoever reads this file",
   "title": "Telraam traffic counts in Flanders",
   "description": "...",
-  "license": "https://spdx.org/licenses/CC-BY-4.0",
+  "license": "https://spdx.org/licenses/CC-BY-NC-4.0",
   "source": { "type": "ldes1", "url": "https://ldes.telraam-api.net/measurements" },
   "membership": { "type": "https://data.vlaanderen.be/ns/verkeersmetingen#Verkeersmeting" },
   "timestampPath": "http://www.w3.org/ns/prov#generatedAtTime",

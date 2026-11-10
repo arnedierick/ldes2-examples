@@ -33,7 +33,7 @@ npm run check -- telraam --sample 100
 
 ## License
 
-The Flemish data catalog lists the dataset as
-[public](https://www.vlaanderen.be/datavindplaats/catalogus/telraam-ldes-verkeerstellingen-in-vlaanderen)
-(`dct:accessRights` `EAR:PUBLIC` in the description of the LDES), but neither the catalog nor the LDES states a
-license. Converted data is therefore not included in this repository: ask Telraam before you publish it.
+Telraam licenses all its data under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) (see its
+[FAQ](https://faq.telraam.net/en/article/9/telraam-data-license-what-can-i-do-with-the-telraam-data)): you can use,
+adapt and publish the data, with credit to Telraam, for non-commercial purposes only. For commercial use, contact
+Telraam.

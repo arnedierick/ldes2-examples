@@ -1,6 +1,7 @@
 {
   "$comment": "Traffic counts of Telraam sensors in Flanders. See README.md in this folder.",
   "title": "Telraam traffic counts in Flanders",
+  "license": "https://spdx.org/licenses/CC-BY-NC-4.0",
   "source": {
     "type": "ldes1",
     "url": "https://ldes.telraam-api.net/measurements",
