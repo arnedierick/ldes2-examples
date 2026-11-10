@@ -19,7 +19,7 @@ boundaries of messages.
 
 | Dataset | Source | Members | License of the data |
 | --- | --- | --- | --- |
-| [telraam](datasets/telraam) | the [Telraam LDES 1.0](https://ldes.telraam-api.net/measurements) of traffic counts in Flanders | ~30 000 per hour, default window 2 hours | public access, no explicit license (see the [dataset](datasets/telraam)) |
+| [telraam](datasets/telraam) | the [Telraam LDES 1.0](https://ldes.telraam-api.net/measurements) of traffic counts in Flanders | ~30 000 per hour, default window 2 hours | CC BY-NC 4.0 (non-commercial use only) |
 | [riverbench-assist-iot-weather-graphs](datasets/riverbench-assist-iot-weather-graphs) | the RiverBench dataset [assist-iot-weather-graphs](https://w3id.org/riverbench/datasets/assist-iot-weather-graphs/dev) | 10 000 (of 701 278) | CC BY 4.0 |
 | [riverbench-citypulse-traffic-graphs](datasets/riverbench-citypulse-traffic-graphs) | the RiverBench dataset [citypulse-traffic-graphs](https://w3id.org/riverbench/datasets/citypulse-traffic-graphs/dev) | 10 000 (of 4 382 599) | CC BY 4.0 |
 | [riverbench-officegraph](datasets/riverbench-officegraph) | the RiverBench dataset [officegraph](https://w3id.org/riverbench/datasets/officegraph/dev) | 10 000 (of 14 930 478) | CC BY 4.0 |

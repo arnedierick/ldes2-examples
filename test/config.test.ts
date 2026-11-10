@@ -15,7 +15,7 @@ describe("dataset configuration", () => {
         const config = parseConfig(
             {
                 title: "Telraam",
-                license: "https://spdx.org/licenses/CC-BY-4.0",
+                license: "https://spdx.org/licenses/CC-BY-NC-4.0",
                 source: {
                     type: "ldes1",
                     url: "https://example.org/ldes",
