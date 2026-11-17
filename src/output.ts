@@ -87,6 +87,8 @@ export type Stats = {
     formats: FormatName[];
     pageSize?: number;
     bucket?: string;
+    /** Whether every page holds the members of one page of the source */
+    sourcePages?: boolean;
     window: { from?: string; until?: string; limit?: number };
     /** Whether the limit stopped the conversion before the window was complete */
     truncated: boolean;

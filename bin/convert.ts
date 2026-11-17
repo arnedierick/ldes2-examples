@@ -18,6 +18,7 @@ Options (override datasets/<dataset>/dataset.json):
   --formats <list>     comma separated: turtle, trig, ntriples, nquads, jelly, link
   --page-size <n>      at most n members per page
   --bucket <unit>      start a new page every hour or day
+  --source-pages       keep the pages of the LDES 1.0: every page holds the members of one page of the source
   --from <dateTime>    only members at or after this time
   --until <dateTime>   only members before this time
   --limit <n>          at most n members
@@ -32,6 +33,7 @@ const { values, positionals } = parseCommandLine(
         formats: { type: "string" },
         "page-size": { type: "string" },
         bucket: { type: "string" },
+        "source-pages": { type: "boolean" },
         from: { type: "string" },
         until: { type: "string" },
         limit: { type: "string" },
@@ -62,6 +64,7 @@ try {
                     size: parsePositiveInteger(values["page-size"], "--page-size"),
                 }),
                 ...(values.bucket !== undefined && { bucket: values.bucket as "hour" | "day" }),
+                ...(values["source-pages"] && { source: true }),
             },
             window: {
                 ...(values.from !== undefined && { from: values.from }),

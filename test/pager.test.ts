@@ -76,4 +76,30 @@ describe("Pager", () => {
         expect(() => new Pager({ bucket: "hour" }).place(ordered(observation("a", "x")))).toThrow(/timestamp/);
         expect(() => new Pager({ size: 0 })).toThrow(/positive integer/);
     });
+    test("source pages: a new page for every page of the source, also within a bucket", () => {
+        const on = (name: string, time: string, page: string) => ({
+            ...at(time),
+            id: observation(name, time).id,
+            page,
+        });
+        const pager = new Pager({ source: true, bucket: "hour" });
+        const starts = [
+            on("a", "2026-01-01T00:00:00Z", "p1"),
+            on("b", "2026-01-01T00:00:00Z", "p1"),
+            on("c", "2026-01-01T00:00:00Z", "p2"),
+        ].map((member) => pager.place(member).isNew);
+        expect(starts).toEqual([true, false, true]);
+        expect(pager.finish().map((page) => [page.name, page.members])).toEqual([
+            ["2026-01-01T00-0000", 2],
+            ["2026-01-01T00-0001", 1],
+        ]);
+    });
+
+    test("source pages: a page of the source that comes back, or a member without a page, is an error", () => {
+        const pager = new Pager({ source: true });
+        pager.place({ ...ordered(observation("a", "x")), page: "p1" });
+        pager.place({ ...ordered(observation("b", "x")), page: "p2" });
+        expect(() => pager.place({ ...ordered(observation("c", "x")), page: "p1" })).toThrow(/already written/);
+        expect(() => new Pager({ source: true }).place(ordered(observation("d", "x")))).toThrow(/which of its pages/);
+    });
 });

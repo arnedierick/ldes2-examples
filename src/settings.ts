@@ -67,9 +67,13 @@ export function resolveSettings(config: DatasetConfig, source: SourceDescription
     }
     if (from && until && from >= until) throw new SettingsError("The window ends before it starts");
 
-    const pages = { ...config.pages, ...overrides.pages };
+    // Keeping the pages of the source replaces the configured page size and bucket, unless they are overridden too
+    const pages = overrides.pages?.source ? overrides.pages : { ...config.pages, ...overrides.pages };
     if (pages.bucket && !timestampPath) {
         throw new SettingsError("Pages per hour or day need a timestamp path, but this dataset is in implicit order");
+    }
+    if (pages.source && config.source.type !== "ldes1") {
+        throw new SettingsError("Only an LDES 1.0 has pages that the LDES 2.0 can keep");
     }
 
     const linkable = source.link !== undefined && membership !== "explicit" && !from && !until && !window.limit;

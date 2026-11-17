@@ -89,19 +89,22 @@ async function* lookahead<T>(items: AsyncIterable<T>, size: number, onHead: (hea
     }
 }
 
-/** Checks that timestamps are in ascending order, and that either all or none of them have a timezone */
+/**
+ * Checks that timestamps are in ascending order, and that either all or none of them have a timezone.
+ * When the pages of the source are kept, the order is checked per page (`newPage`): pages may overlap in time.
+ */
 class OrderCheck {
     first?: Timestamp;
     last?: Timestamp;
 
-    add(member: SourceMember, timestamp: Timestamp, path: string) {
+    add(member: SourceMember, timestamp: Timestamp, path: string, newPage = false) {
         if (this.first && this.first.zoned !== timestamp.zoned) {
             throw new MemberError(
                 `<${member.id.value}> has a timestamp ${timestamp.zoned ? "with" : "without"} a timezone, unlike the ` +
                     "members before it, so they cannot be ordered with certainty",
             );
         }
-        if (this.last && compareTimestamps(timestamp, this.last) < 0) {
+        if (!newPage && this.last && compareTimestamps(timestamp, this.last) < 0) {
             throw new MemberError(
                 `The members are not in ascending order of <${path}>: <${member.id.value}> (${timestamp.lexical}) comes ` +
                     `after a member of ${this.last.lexical}. Set "timestampPath": null to keep the order of the source.`,
@@ -152,21 +155,29 @@ export async function convert(config: DatasetConfig, source: Source, options: Co
 
     const order = new OrderCheck();
     const { timestampPath, from, until, limit } = settings;
+    const sourcePages = settings.pages.source === true;
     let members = 0;
     let quads = 0;
     let truncated = false;
+    let sourcePage: string | undefined;
     try {
-        const all = source.members({ from, until, timestampPath, membership: settings.membership });
+        const all = source.members({ from, until, timestampPath, membership: settings.membership, sourcePages });
         for await (const member of lookahead(all, PREFIX_SAMPLE, choosePrefixes)) {
             const timestamp = timestampPath ? memberTimestamp(member, timestampPath) : undefined;
             if (timestamp && from && timestamp.epochMs < from.getTime()) continue;
-            if (timestamp && until && timestamp.epochMs >= until.getTime()) break;
+            if (timestamp && until && timestamp.epochMs >= until.getTime()) {
+                // Pages of the source can overlap in time, so a later page can still have members in the window
+                if (sourcePages) continue;
+                break;
+            }
             if (limit !== undefined && members >= limit) {
                 truncated = true;
                 break;
             }
             validateMember(member, settings);
-            if (timestamp) order.add(member, timestamp, timestampPath!);
+            const newSourcePage = sourcePages && member.page !== sourcePage;
+            sourcePage = member.page;
+            if (timestamp) order.add(member, timestamp, timestampPath!, newSourcePage);
 
             const { page, isNew } = pager.place({ ...member, timestamp });
             if (isNew) {
@@ -207,6 +218,7 @@ export async function convert(config: DatasetConfig, source: Source, options: Co
         formats: settings.formats,
         pageSize: settings.pages.size,
         bucket: settings.pages.bucket,
+        sourcePages: settings.pages.source,
         window: { from: from?.toISOString(), until: until?.toISOString(), limit },
         truncated,
         members,
