@@ -29,6 +29,7 @@ itself where possible. `src/config.ts` checks the configuration, and names the f
 | Field | Meaning |
 | --- | --- |
 | `url` | The IRI of the `ldes:EventStream`. Its description provides the title, description, license, timestamp path and version path. |
+| `view` | Optional. A view or page to start at instead of the event stream, e.g. a view that is not its default one. Cannot be combined with `fragments`. |
 | `fragments` | Optional. `{ "template": "...{year}-{month}-{day}T{hour}...", "every": "hour" }`: the fragment with the members of every hour (or `day`). `{year}`, `{month}`, `{day}` and `{hour}` become the zero padded UTC start of the hour or day. Use this when the relations of the LDES do not let a client skip to a time window: then the client starts at every fragment instead of at the event stream. It needs a window with `from` and `until`. |
 | `accept` | The media type to request the pages in (default `text/turtle`): Turtle, TriG, N-Triples, N-Quads or JSON-LD (`application/ld+json`). This is also the serialization in which the size of the LDES 1.0 is measured. |
 | `rawReference` | `false` to compare members only with what ldes-client extracts, not also with their Concise Bounded Description in the raw pages (default `true`). Switch it off when members are not the CBD of their identifier, e.g. when the LDES extracts them with a shape. |
@@ -60,6 +61,7 @@ itself where possible. `src/config.ts` checks the configuration, and names the f
 | `window.limit` | At most this many members. A check does not compare the number of members of a limited conversion. |
 | `pages.size` | At most this many members per page (default: no maximum). |
 | `pages.bucket` | `"hour"` or `"day"`: a new page every hour or day (UTC). Needs a timestamp path. |
+| `pages.source` | `true`: the same pages as an LDES 1.0 source. Every page holds the members that one page of the source lists with `tree:member` (a member listed on two pages is on the first one fetched). With a timestamp path, the members of a page are sorted, and pages are in the order of their first member; pages may then overlap in time. Without one, the client must deliver the members page by page, or the conversion stops. On the command line (`--source-pages`), it replaces the configured `size` and `bucket`. |
 | `formats` | Which of `turtle`, `trig`, `ntriples`, `nquads`, `jelly` and `link` to write. By default: Turtle, N-Triples and Jelly, or TriG, N-Quads and Jelly when members have named graphs; and `link` when the source has a file to link to, membership is not explicit and there is no window. |
 | `prefixes` | Prefixes for Turtle and TriG pages, which take precedence over the ones the converter chooses. |
 

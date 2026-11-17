@@ -24,6 +24,8 @@ export type Ldes1SourceConfig = {
     type: "ldes1";
     /** The IRI of the ldes:EventStream */
     url: string;
+    /** A view or page to read the members from, instead of the event stream (e.g. a view that is not its default) */
+    view?: string;
     /**
      * Where the members of every hour or day are, for an LDES 1.0 of which the relations do not let a client skip to
      * a time window. `{year}`, `{month}`, `{day}` and `{hour}` are replaced by the (zero padded, UTC) start of the bucket.
@@ -89,6 +91,8 @@ export type PageConfig = {
     size?: number;
     /** Start a new page at every hour or day (only for timestamp ordered datasets) */
     bucket?: Bucket;
+    /** Keep the pages of the source: every page holds the members of one page of an LDES 1.0 */
+    source?: boolean;
 };
 
 export class ConfigError extends Error {}
@@ -186,8 +190,11 @@ class Reader {
 function readSource(reader: Reader): SourceConfig {
     const type = reader.oneOf("type", ["ldes1", "riverbench"]);
     if (type === "ldes1") {
-        reader.allowOnly(["type", "url", "fragments", "accept", "rawReference", "shape"]);
+        reader.allowOnly(["type", "url", "view", "fragments", "accept", "rawReference", "shape"]);
         const fragments = reader.object("fragments");
+        if (fragments && reader.raw("view") !== undefined) {
+            throw new ConfigError("source.view and source.fragments cannot be combined");
+        }
         if (fragments) {
             fragments.allowOnly(["template", "every"]);
             const template = fragments.requiredString("template");
@@ -198,6 +205,7 @@ function readSource(reader: Reader): SourceConfig {
         return {
             type,
             url: reader.iri("url") ?? reader.requiredString("url"),
+            view: reader.iri("view"),
             fragments: fragments && {
                 template: fragments.requiredString("template"),
                 every: fragments.oneOf("every", ["hour", "day"]) ?? "hour",
@@ -258,7 +266,7 @@ export function parseConfig(json: unknown, id: string): DatasetConfig {
     const window = reader.object("window");
     window?.allowOnly(["from", "until", "limit"]);
     const pages = reader.object("pages");
-    pages?.allowOnly(["size", "bucket"]);
+    pages?.allowOnly(["size", "bucket", "source"]);
 
     const formats = reader.raw("formats");
     if (
@@ -288,7 +296,11 @@ export function parseConfig(json: unknown, id: string): DatasetConfig {
             until: window.dateTime("until"),
             limit: window.positiveInteger("limit"),
         },
-        pages: pages && { size: pages.positiveInteger("size"), bucket: pages.oneOf("bucket", ["hour", "day"]) },
+        pages: pages && {
+            size: pages.positiveInteger("size"),
+            bucket: pages.oneOf("bucket", ["hour", "day"]),
+            source: pages.boolean("source"),
+        },
         formats: formats as FormatName[] | undefined,
         prefixes: prefixes && prefixMap,
     };

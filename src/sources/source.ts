@@ -38,6 +38,11 @@ export type MemberOptions = {
     timestampPath?: string;
     /** How the converter identifies members, for a source of which the data has no identifiers of its own */
     membership: Membership;
+    /**
+     * Keep the pages of the source: give every member the `page` it is on, and deliver the members page by page. With
+     * a timestamp path, the members of every page are in ascending order, and pages in the order of their first member.
+     */
+    sourcePages?: boolean;
 };
 
 /** The bytes a source used to deliver the members that were read: the baseline to compare the LDES 2.0 with */

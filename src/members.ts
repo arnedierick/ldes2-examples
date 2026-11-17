@@ -11,6 +11,8 @@ import { LDES_MEMBER, RDF_TYPE } from "./vocab.ts";
 export type SourceMember = {
     id: NamedNode;
     quads: Quad[];
+    /** The page of the source the member is on, for a conversion that keeps the pages of the source */
+    page?: string;
 };
 
 /** A member that is ready to be written: with its timestamp, if the dataset is ordered on time */

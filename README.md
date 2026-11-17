@@ -20,6 +20,7 @@ boundaries of messages.
 | Dataset | Source | Members | License of the data |
 | --- | --- | --- | --- |
 | [telraam](datasets/telraam) | the [Telraam LDES 1.0](https://ldes.telraam-api.net/measurements) of traffic counts in Flanders | ~30 000 per hour, default window 2 hours | CC BY-NC 4.0 (non-commercial use only) |
+| [telraam-by-page](datasets/telraam-by-page) | the same Telraam LDES 1.0, from the first page of its `by-page` view, with the same pages | 500 000 (1000 pages) | CC BY-NC 4.0 (non-commercial use only) |
 | [riverbench-assist-iot-weather-graphs](datasets/riverbench-assist-iot-weather-graphs) | the RiverBench dataset [assist-iot-weather-graphs](https://w3id.org/riverbench/datasets/assist-iot-weather-graphs/dev) | 10 000 (of 701 278) | CC BY 4.0 |
 | [riverbench-citypulse-traffic-graphs](datasets/riverbench-citypulse-traffic-graphs) | the RiverBench dataset [citypulse-traffic-graphs](https://w3id.org/riverbench/datasets/citypulse-traffic-graphs/dev) | 10 000 (of 4 382 599) | CC BY 4.0 |
 | [riverbench-officegraph](datasets/riverbench-officegraph) | the RiverBench dataset [officegraph](https://w3id.org/riverbench/datasets/officegraph/dev) | 10 000 (of 14 930 478) | CC BY 4.0 |
@@ -64,6 +65,7 @@ dataset:
 | `--formats turtle,jelly` | the serializations to write: `turtle`, `trig`, `ntriples`, `nquads`, `jelly`, `link` |
 | `--page-size 500` | at most 500 members per page |
 | `--bucket hour` | a new page every hour (or `day`) |
+| `--source-pages` | the same pages as the LDES 1.0: every page holds the members of one page of the source (instead of the configured page size and bucket) |
 | `--from 2026-10-28T08:00:00Z --until 2026-10-28T12:00:00Z` | only members in this window |
 | `--limit 1000` | at most 1000 members |
 | `--out <dir>` | write to another folder than `out/` |

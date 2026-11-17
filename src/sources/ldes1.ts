@@ -88,11 +88,18 @@ export class Ldes1Source implements Source {
 
     async *members(options: MemberOptions): AsyncGenerator<SourceMember> {
         this.bytes = NO_BYTES;
+        const pages = options.sourcePages ? new SourcePages() : undefined;
         const fetch = recordingFetch(this.accept, (response) => {
             this.bytes = addSizes(this.bytes, measure(response.body));
             this.contentType = response.contentType;
+            pages?.add(response);
         });
         for (const harvest of this.harvests(options.from, options.until)) {
+            if (pages) {
+                const read = { noShape: this.config.shape === false, ...harvest.read, fetch };
+                yield* pages.members(readMembers(harvest.url, read), options.timestampPath);
+                continue;
+            }
             if (!this.config.fragments) {
                 yield* readMembers(harvest.url, {
                     noShape: this.config.shape === false,
@@ -128,11 +135,12 @@ export class Ldes1Source implements Source {
     private harvests(from: Date | undefined, until: Date | undefined): Harvest[] {
         const fragments = this.config.fragments;
         if (!fragments) {
+            const view = this.config.view;
             return [
                 {
-                    label: "the LDES 1.0",
-                    url: this.config.url,
-                    read: { after: from, before: until },
+                    label: view ? `the LDES 1.0 from <${view}>` : "the LDES 1.0",
+                    url: view ?? this.config.url,
+                    read: { after: from, before: until, urlIsView: view !== undefined },
                     includes: () => true,
                 },
             ];
@@ -261,5 +269,67 @@ export class Ldes1Source implements Source {
             descriptions.set(id, [...earlier, quads]);
             reference.members.set(id, [...(reference.members.get(id) ?? []), ...quads]);
         }
+    }
+}
+
+const TREE_MEMBER = DataFactory.namedNode(NS.tree + "member");
+
+/**
+ * The pages of an LDES 1.0, as the client fetches them: which page lists every member with `tree:member`. A member
+ * that is listed on more than one page is on the first page that was fetched.
+ */
+class SourcePages {
+    /** Member IRI → the URL of its page */
+    private readonly pageOf = new Map<string, string>();
+    /** Page URL → the order in which it was fetched */
+    private readonly fetched = new Map<string, number>();
+    private parsing: Promise<void>[] = [];
+
+    add(response: Response) {
+        if (!parsable(response.contentType)) return;
+        if (!this.fetched.has(response.url)) this.fetched.set(response.url, this.fetched.size);
+        const parsed = parseDocument(response.body.toString("utf8"), response.url, response.contentType).then(
+            (store) => {
+                for (const member of store.getObjects(null, TREE_MEMBER, null)) {
+                    if (!this.pageOf.has(member.value)) this.pageOf.set(member.value, response.url);
+                }
+            },
+        );
+        parsed.catch(() => undefined); // awaited in pageOfMember
+        this.parsing.push(parsed);
+    }
+
+    private async pageOfMember(member: SourceMember): Promise<string> {
+        const parsing = this.parsing;
+        this.parsing = [];
+        await Promise.all(parsing);
+        const page = this.pageOf.get(member.id.value);
+        if (page === undefined) throw new Error(`No page of the source lists <${member.id.value}> with tree:member`);
+        return page;
+    }
+
+    /**
+     * The members with their page. Without a timestamp path, in the order of the client, which must deliver the
+     * members page by page (the pager checks that). With one, all members are read first: the pages are delivered in
+     * the order of their first timestamp, and the members of every page in ascending order.
+     */
+    async *members(members: AsyncIterable<SourceMember>, timestampPath?: string): AsyncGenerator<SourceMember> {
+        if (!timestampPath) {
+            for await (const member of members) yield { ...member, page: await this.pageOfMember(member) };
+            return;
+        }
+        const byPage = new Map<string, { member: SourceMember; timestamp: ReturnType<typeof memberTimestamp> }[]>();
+        for await (const member of members) {
+            const page = await this.pageOfMember(member);
+            const list = byPage.get(page) ?? [];
+            list.push({ member: { ...member, page }, timestamp: memberTimestamp(member, timestampPath) });
+            byPage.set(page, list);
+        }
+        const pages = [...byPage.entries()].map(([url, list]) => {
+            list.sort((a, b) => compareTimestamps(a.timestamp, b.timestamp));
+            return { order: this.fetched.get(url) ?? 0, list };
+        });
+        pages.sort((a, b) => compareTimestamps(a.list[0].timestamp, b.list[0].timestamp) || a.order - b.order);
+        for (const page of pages) for (const { member } of page.list) yield member;
     }
 }

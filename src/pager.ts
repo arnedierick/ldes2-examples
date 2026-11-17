@@ -1,7 +1,8 @@
 /**
  * Splits an ordered stream of members into pages, and computes what a relation to every page says about it.
  *
- * A new page starts when the current page has `size` members, or when a member is in a new hour or day (`bucket`).
+ * A new page starts when the current page has `size` members, when a member is in a new hour or day (`bucket`), or
+ * when a member is on another page of the source than the member before it (`source`).
  * For a timestamp ordered LDES, every page gets the interval [timeFrom, timeUntil) of its members:
  *  - the first page of a bucket starts at the start of the bucket, other pages at the timestamp of their first member;
  *  - the last page of a bucket ends at the end of the bucket, other pages just after their last member.
@@ -17,6 +18,8 @@ export type PageSpec = {
     size?: number;
     /** Start a new page at every hour or day */
     bucket?: Bucket;
+    /** Keep the pages of the source: a new page for every page of the source (the `page` of a member) */
+    source?: boolean;
 };
 
 export type PageInfo = {
@@ -31,12 +34,14 @@ export type PageInfo = {
     timeUntil?: string;
 };
 
-type Open = { page: PageInfo; bucket?: number; last?: Timestamp; indexInBucket: number };
+type Open = { page: PageInfo; bucket?: number; last?: Timestamp; indexInBucket: number; sourcePage?: string };
 
 export class Pager {
     private readonly spec: PageSpec;
     private readonly pages: PageInfo[] = [];
     private open?: Open;
+    /** The pages of the source that were written, to notice a source that does not deliver them one by one */
+    private readonly sourcePages = new Set<string>();
 
     constructor(spec: PageSpec) {
         this.spec = spec;
@@ -50,21 +55,34 @@ export class Pager {
      * the caller then closes the files of the previous page and opens new ones.
      */
     place(member: OrderedMember): { page: PageInfo; isNew: boolean } {
-        const { bucket, size } = this.spec;
+        const { bucket, size, source } = this.spec;
         if (bucket && !member.timestamp) throw new Error("Pages per hour or day need members with a timestamp");
+        if (source && member.page === undefined) {
+            throw new Error(`The source does not say which of its pages <${member.id.value}> is on`);
+        }
         const memberBucket = bucket && member.timestamp ? bucketStart(member.timestamp, bucket) : undefined;
         const current = this.open;
         const newBucket = current !== undefined && memberBucket !== current.bucket;
         const full = current !== undefined && size !== undefined && current.page.members >= size;
+        const newSourcePage = source === true && (current === undefined || member.page !== current.sourcePage);
 
         let isNew = false;
-        if (!current || newBucket || full) {
+        if (!current || newBucket || full || newSourcePage) {
             if (current) this.close(current, newBucket);
+            if (newSourcePage) {
+                if (this.sourcePages.has(member.page!)) {
+                    throw new Error(
+                        `<${member.id.value}> is on the source page ${member.page}, of which a page was already written`,
+                    );
+                }
+                this.sourcePages.add(member.page!);
+            }
             const indexInBucket = current && !newBucket ? current.indexInBucket + 1 : 0;
             this.open = {
                 page: this.newPage(member, memberBucket, indexInBucket),
                 bucket: memberBucket,
                 indexInBucket,
+                sourcePage: member.page,
             };
             this.pages.push(this.open.page);
             isNew = true;
@@ -89,7 +107,8 @@ export class Pager {
         let name: string;
         if (bucket && memberBucket !== undefined) {
             const label = bucketLabel(memberBucket, bucket);
-            name = size === undefined ? label : `${label}-${String(indexInBucket).padStart(4, "0")}`;
+            const one = size === undefined && !this.spec.source;
+            name = one ? label : `${label}-${String(indexInBucket).padStart(4, "0")}`;
         } else {
             name = `page-${String(number).padStart(5, "0")}`;
         }
